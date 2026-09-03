@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador Runtime .PCJ</title>
+  <style id="dynamic-fonts"></style>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 20px; background: #1e1e1e; color: #fff; }
+    .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .header-bar h1 { margin: 0; font-size: 24px; }
+    .lang-selector { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+    .lang-selector select { background: #252526; color: #fff; border: 1px solid #444; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+    .container { display: flex; gap: 20px; }
+    .editor-section { width: 50%; display: flex; flex-direction: column; gap: 10px; }
+    textarea { width: 100%; height: 460px; background: #252526; color: #9cdcfe; font-family: monospace; padding: 10px; border: 1px solid #444; border-radius: 6px; box-sizing: border-box; }
+    .right-panel { width: 50%; display: flex; flex-direction: column; gap: 10px; }
+    #simulator-screen { height: 450px; background: #ffffff; color: #000; padding: 20px; border-radius: 6px; border: 3px solid #007acc; box-sizing: border-box; overflow-y: auto; transition: background-color 0.3s; }
+    #simulator-screen * { font-family: inherit; }
+    #simulator-screen button { cursor: pointer; padding: 6px 12px; margin: 4px; }
+    .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn-action { background: #007acc; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: none; display: inline-block; }
+    .btn-action:hover { background: #005999; }
+    .btn-secondary { background: #3c3c3c; color: white; border: 1px solid #555; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
+    .btn-secondary:hover { background: #505050; }
+    .btn-pdf { background: #2e7d32; color: white; border: none; padding: 8px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: none; display: inline-block; }
+    .btn-pdf:hover { background: #1b5e20; }
+    #virtual-console-modal { display: none; background: #181818; border: 1px solid #333; border-radius: 6px; padding: 12px; height: 180px; overflow-y: auto; font-family: monospace; color: #4af626; font-size: 13px; white-space: pre-wrap; }
+    .error-box { color: #d93025; background: #fce8e6; padding: 12px; border-radius: 6px; border: 1px solid #f5c6cb; font-weight: bold; font-family: monospace; }
+    #file-status { font-size: 12px; color: #aaa; width: 100%; margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+  <div class="header-bar">
+    <h1 id="ui-title">Simulador Runtime .PCJ</h1>
+    <div class="lang-selector">
+      <label for="global-lang-select" id="ui-lang-label">Idioma de la interfaz:</label>
+      <select id="global-lang-select">
+        <option value="es" selected>Español</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="editor-section">
+      <textarea id="pcj-editor" spellcheck="false" placeholder="Escribe o pega tu código .PCJ aquí..."><pcj>
+  <ImagTEM>
+     <system>
+        <name_company>
+        {
+type = "code"
+ejecutable = "true"
+morearch = "true"
+binary = "false"
+ttf archive = "false"
+text-font = sans-serif
+Language(s) = ES_CO (0)
+Codification = "utf-8"
+is js = "true"
+}
+<title>
+</system>
+<structure>
+<title1>Bienvenidos</title1>
+<button function = "hola()">[Hola]</button>
+</structure>
+<secret texts>
+1. Hola cómo estás 
+</secret texts>
+<console>
+<p>Hola desde la consola</p>
+result[2+2]=‘2’
+<p>‘2’</p>
+</console>
+<script>
+ function hola() {
+ document.body.style.backgroundColor = "yellow";
+ [[<<pcj>>]] {
+ <text>Holaaa</text>
+ }
+ }
+ </script>
+ </pcj></textarea>
+      
+      <div class="controls">
+        <button id="btn-export-file" class="btn-action">Guardar Documento .PCJ</button>
+        <a id="btn-export-pdf" href="guía.html" download="guía.html" class="btn-pdf">Descargar Guía (.PCJ)</a>
+        <label id="extra-assets-wrapper" style="display: none; cursor: pointer;">
+          <span id="ui-btn-attach" class="btn-secondary">Adjuntar Archivos</span>
+          <input type="file" id="assets-input" multiple style="display: none;">
+        </label>
+        <div id="file-status"></div>
+      </div>
+    </div>
+
+    <div class="right-panel">
+      <div id="simulator-screen"></div>
+
+      <div class="controls">
+        <button id="btn-toggle-console" class="btn-action">Ver Consola Sandbox</button>
+      </div>
+      <div id="virtual-console-modal"></div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_LANGUAGES = {
+      'ES_CO': { name: 'Español (Colombia)', html: 'es-CO', langGroup: 'es' },
+      'ES_MX': { name: 'Español (México)', html: 'es-MX', langGroup: 'es' },
+      'ES_EU': { name: 'Español (Europa)', html: 'es-ES', langGroup: 'es' },
+      'EN_US': { name: 'English (US)', html: 'en-US', langGroup: 'en' },
+      'EN_CA': { name: 'English (Canada)', html: 'en-CA', langGroup: 'en' }
+    };
+
+    const TRANSLATIONS = {
+      es: {
+        appTitle: "Simulador Runtime .PCJ",
+        langLabel: "Idioma de la interfaz:",
+        placeholder: "Escribe o pega tu código .PCJ aquí...",
+        btnSave: "Guardar Documento .PCJ",
+        btnPdf: "Descargar Guía html (.PCJ)",
+        btnAttach: "Adjuntar Archivos",
+        btnShowConsole: "Ver Consola Sandbox",
+        btnHideConsole: "Ocultar Consola Sandbox",
+        filesLoaded: "archivo(s) cargado(s)",
+        loadedFonts: "Fuentes detectadas:",
+        consoleName: "Consola Sandbox PCJ",
+        langHeader: "Idioma",
+        filesHeader: "Archivos .lang",
+        defaultLang: "Por defecto del sistema",
+        codHeader: "Codificación",
+        executed: "Ejecutado",
+        funcNotFound: "La función no existe en el script",
+        compileError: "Error de Compilación JS",
+        syntaxErrorHeader: "Error de Sintaxis",
+        execErrorHeader: "Error de Ejecución",
+        execError: "Error de Ejecución: 'ejecutable' es false. Operación bloqueada.",
+        systemError: "Error en <system>: Valor o sintaxis no válida dentro de la configuración."
+      },
+      en: {
+        appTitle: ".PCJ Runtime Simulator",
+        langLabel: "Interface Language:",
+        placeholder: "Type or paste your .PCJ code here...",
+        btnSave: "Save .PCJ Document",
+        btnPdf: "Download html Guide (.PCJ)",
+        btnAttach: "Attach Files",
+        btnShowConsole: "View Sandbox Console",
+        btnHideConsole: "Hide Sandbox Console",
+        filesLoaded: "file(s) loaded",
+        loadedFonts: "Detected fonts:",
+        consoleName: "PCJ Sandbox Console",
+        langHeader: "Language",
+        filesHeader: ".lang Files",
+        defaultLang: "System Default",
+        codHeader: "Codification",
+        executed: "Executed",
+        funcNotFound: "Function does not exist in script",
+        compileError: "JS Compilation Error",
+        syntaxErrorHeader: "Syntax Error",
+        execErrorHeader: "Execution Error",
+        execError: "Execution Error: 'ejecutable' is false. Operation blocked.",
+        systemError: "Error in <system>: Invalid value or syntax in configuration."
+      }
+    };
+
+    class PCJSimulator {
+      constructor(editorId, screenId, consoleId, consoleBtnId) {
+        this.editor = document.getElementById(editorId);
+        this.screen = document.getElementById(screenId);
+        this.virtualConsole = document.getElementById(consoleId);
+        this.btnConsole = document.getElementById(consoleBtnId);
+        
+        this.btnExport = document.getElementById('btn-export-file');
+        this.btnPdf = document.getElementById('btn-export-pdf');
+        this.extraAssetsWrapper = document.getElementById('extra-assets-wrapper');
+        this.assetsInput = document.getElementById('assets-input');
+        this.fileStatus = document.getElementById('file-status');
+        this.globalLangSelect = document.getElementById('global-lang-select');
+        this.dynamicStyles = document.getElementById('dynamic-fonts');
+
+        this.virtualEnvironment = {};
+        this.systemConfig = {};
+        this.sandboxLogs = [];
+        this.userAttachedFiles = [];
+        this.detectedFonts = [];
+        this.hasSystemError = false;
+        this.uiLang = 'es';
+
+        this.initEvents();
+        this.updateUI();
+        this.run();
+      }
+
+      initEvents() {
+        this.globalLangSelect.addEventListener('change', (e) => {
+          this.uiLang = e.target.value;
+          this.updateUI();
+          this.run();
+        });
+
+        this.btnConsole.addEventListener('click', () => {
+          const isVisible = this.virtualConsole.style.display === 'block';
+          this.virtualConsole.style.display = isVisible ? 'none' : 'block';
+          const i18n = this.getI18n();
+          this.btnConsole.textContent = isVisible ? i18n.btnShowConsole : i18n.btnHideConsole;
+        });
+
+        this.btnExport.addEventListener('click', () => this.exportPCJFile());
+
+        if (this.assetsInput) {
+          this.assetsInput.addEventListener('change', (e) => {
+            this.userAttachedFiles = Array.from(e.target.files);
+            this.registerAttachedFonts();
+            this.updateFileStatus();
+            this.run();
+          });
+        }
+
+        ['input', 'keyup', 'paste', 'change'].forEach(evt => {
+          this.editor.addEventListener(evt, () => {
+            setTimeout(() => this.run(), 10);
+          });
+        });
+      }
+
+      registerAttachedFonts() {
+        this.dynamicStyles.innerHTML = '';
+        this.detectedFonts = [];
+
+        this.userAttachedFiles.forEach(file => {
+          if (/\.(ttf|otf|woff|woff2)$/i.test(file.name)) {
+            const fontUrl = URL.createObjectURL(file);
+            const fontName = file.name.replace(/\.[^/.]+$/, "");
+            this.detectedFonts.push(fontName);
+            // Registra la fuente con el nombre exacto de su archivo (sin la extensión .ttf)
+            const fontRule = `@font-face { font-family: '${fontName}'; src: url('${fontUrl}'); }`;
+            this.dynamicStyles.appendChild(document.createTextNode(fontRule));
+          }
+        });
+      }
+
+      updateFileStatus() {
+        const i18n = this.getI18n();
+        if (this.userAttachedFiles.length > 0) {
+          let statusText = `${this.userAttachedFiles.length} ${i18n.filesLoaded}`;
+          if (this.detectedFonts.length > 0) {
+            statusText += `<br><span style="color: #4af626;">${i18n.loadedFonts} ${this.detectedFonts.join(', ')}</span>`;
+          }
+          this.fileStatus.innerHTML = statusText;
+        } else {
+          this.fileStatus.innerHTML = '';
+        }
+      }
+
+      updateUI() {
+        const i18n = TRANSLATIONS[this.uiLang];
+        document.getElementById('ui-title').textContent = i18n.appTitle;
+        document.getElementById('ui-lang-label').textContent = i18n.langLabel;
+        this.editor.placeholder = i18n.placeholder;
+        this.btnExport.textContent = i18n.btnSave;
+        this.btnPdf.textContent = i18n.btnPdf;
+        document.getElementById('ui-btn-attach').textContent = i18n.btnAttach;
+
+        const isVisible = this.virtualConsole.style.display === 'block';
+        this.btnConsole.textContent = isVisible ? i18n.btnHideConsole : i18n.btnShowConsole;
+
+        this.updateFileStatus();
+      }
+
+      exportPCJFile() {
+        const text = this.editor.value;
+        if (!text) return;
+
+        const encodedText = encodeURIComponent(text);
+        const link = document.createElement('a');
+        link.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodedText);
+        link.setAttribute('download', 'code.pcj');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      getLanguageData() {
+        const rawLang = (this.systemConfig['Language(s)'] || '').trim();
+        if (!rawLang) {
+          return {
+            code: this.uiLang.toUpperCase(),
+            name: this.uiLang === 'es' ? 'Español' : 'English',
+            htmlLang: this.uiLang,
+            group: this.uiLang,
+            filesCount: '0'
+          };
+        }
+
+        const match = rawLang.match(/([a-zA-Z_\-]+)\s*\(\s*(\d+)\s*\)/);
+        let code = 'ES_CO';
+        let filesCount = '0';
+
+        if (match) {
+          code = match[1].trim().toUpperCase();
+          filesCount = match[2].trim();
+        } else {
+          code = rawLang.toUpperCase();
+        }
+
+        const langInfo = DEFAULT_LANGUAGES[code] || { 
+          name: code, 
+          html: code.toLowerCase().replace('_', '-'),
+          langGroup: code.startsWith('EN') ? 'en' : 'es'
+        };
+
+        return {
+          code: code,
+          name: langInfo.name,
+          htmlLang: langInfo.html,
+          group: langInfo.langGroup,
+          filesCount: filesCount
+        };
+      }
+
+      getI18n() {
+        const langData = this.getLanguageData();
+        return TRANSLATIONS[langData.group] || TRANSLATIONS[this.uiLang] || TRANSLATIONS['es'];
+      }
+
+      parseSystemConfig(code) {
+        this.systemConfig = {};
+        this.hasSystemError = false;
+
+        const systemBlockMatch = code.match(/<system>([\s\S]*?)<\/system>/i);
+        if (!systemBlockMatch) return;
+
+        const systemContent = systemBlockMatch[1];
+        const blockMatch = systemContent.match(/\{([\s\S]*?)\}/);
+
+        if (!blockMatch) {
+          this.hasSystemError = true;
+          return;
+        }
+
+        const lines = blockMatch[1].split('\n');
+        const booleanKeys = ['ejecutable', 'executable', 'is js', 'binary', 'morearch', 'ttf archive'];
+        const validSystemKeys = ['type', 'ejecutable', 'executable', 'is js', 'binary', 'morearch', 'text-font', 'language(s)', 'codification', 'ttf archive'];
+
+        for (let line of lines) {
+          line = line.trim();
+          if (!line || line.startsWith('//')) continue;
+
+          if (line.includes('=')) {
+            const parts = line.split('=');
+            const rawKey = parts[0].trim();
+            let rawVal = parts.slice(1).join('=').trim();
+
+            const quoteCount = (rawVal.match(/["']/g) || []).length;
+            if (quoteCount % 2 !== 0 || !rawVal) {
+              this.hasSystemError = true;
+              return;
+            }
+
+            const val = rawVal.replace(/^["']|["']$/g, '').trim();
+            const keyLower = rawKey.toLowerCase();
+
+            if (!validSystemKeys.includes(keyLower)) {
+              this.hasSystemError = true;
+              return;
+            }
+
+            if (booleanKeys.includes(keyLower)) {
+              if (val !== 'true' && val !== 'false') {
+                this.hasSystemError = true;
+                return;
+              }
+            }
+
+            this.systemConfig[rawKey] = val;
+          } else {
+            this.hasSystemError = true;
+            return;
+          }
+        }
+
+        if (this.extraAssetsWrapper) {
+          if (this.systemConfig['morearch'] === 'true') {
+            this.extraAssetsWrapper.style.display = 'inline-block';
+          } else {
+            this.extraAssetsWrapper.style.display = 'none';
+            this.userAttachedFiles = [];
+            this.detectedFonts = [];
+            this.updateFileStatus();
+          }
+        }
+      }
+
+      applyCodification(str) {
+        if (!str) return '';
+        const cod = (this.systemConfig['Codification'] || 'utf-8').toLowerCase().replace(/['"]/g, '');
+
+        try {
+          if (cod === 'ascii') {
+            return str.replace(/[^\x00-\x7F]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+          }
+          if (cod === 'iso-8859-1' || cod === 'latin1') {
+            return unescape(encodeURIComponent(str));
+          }
+        } catch (e) {}
+        return str;
+      }
+
+      textToHex(text) {
+        return text.split('').map(c => c.charCodeAt(0).toString(16).padStart(2, '0')).join(' ');
+      }
+
+      evalMath(texto) {
+        if (!texto) return '';
+
+        let procesado = texto.replace(/(?:result)?\[\s*([\d\.\+\-\*\/\s]+)\s*\]/gi, (_, expr) => {
+          try {
+            return Function(`'use strict'; return (${expr})`)();
+          } catch {
+            return expr;
+          }
+        });
+
+        try {
+          if (/^[\d\.\+\-\*\/\s]+$/.test(procesado)) {
+            return Function(`'use strict'; return (${procesado})`)();
+          }
+        } catch {}
+
+        return procesado;
+      }
+
+      processConsoleLine(linea) {
+        if (!linea) return '';
+        let limpia = linea.replace(/<[^>]+>/g, '').replace(/[‘'“"]/g, '').trim();
+
+        if (limpia.includes('=')) {
+          const partes = limpia.split('=');
+          return this.applyCodification(this.evalMath(partes[0].trim()));
+        }
+
+        return this.applyCodification(this.evalMath(limpia));
+      }
+
+      transpilePCJScript(jsCode) {
+        let cleanJS = jsCode.replace(/document\.body/g, `document.getElementById('${this.screen.id}')`);
+
+        cleanJS = cleanJS.replace(/\[\[<<pcj>>\]\]\s*\{([\s\S]*?)\}/g, (match, innerContent) => {
+          const textMatch = innerContent.match(/<text>(.*?)<\/text>/i);
+          if (textMatch) {
+            return `
+              const _text = document.createElement('p');
+              _text.textContent = "${textMatch[1]}";
+              document.getElementById('${this.screen.id}').appendChild(_text);
+            `;
+          }
+          return '';
+        });
+
+        return cleanJS;
+      }
+
+      logToVirtualConsole(msg) {
+        this.sandboxLogs.push(msg);
+        this.virtualConsole.textContent = this.sandboxLogs.join('\n');
+      }
+
+      compileScript(code) {
+        this.virtualEnvironment = {};
+        const isExec = (this.systemConfig['ejecutable'] !== 'false' && this.systemConfig['executable'] !== 'false');
+        if (!isExec || this.systemConfig['is js'] !== 'true' || this.hasSystemError) return;
+
+        const scriptMatch = code.match(/<script\b[^>]*>([\s\S]*?)<\/script>/i);
+        if (!scriptMatch) return;
+
+        let rawJs = scriptMatch[1].trim();
+        if (!rawJs) return;
+
+        rawJs = this.transpilePCJScript(rawJs);
+        const i18n = this.getI18n();
+
+        try {
+          const transpiledJs = rawJs.replace(/function\s+([a-zA-Z0-9_$]+)/g, 'env.$1 = function');
+          const sandboxRunner = new Function('env', transpiledJs);
+          sandboxRunner(this.virtualEnvironment);
+        } catch (e) {
+          this.logToVirtualConsole(`[${i18n.compileError}]: ${e.message}`);
+        }
+      }
+
+      renderStructure(code) {
+        this.screen.innerHTML = '';
+        this.screen.style.backgroundColor = '#ffffff';
+        this.sandboxLogs = [];
+        this.virtualConsole.textContent = '';
+
+        const i18n = this.getI18n();
+
+        if (this.hasSystemError) {
+          this.screen.innerHTML = `<div class="error-box">[${i18n.syntaxErrorHeader}]: ${i18n.systemError}</div>`;
+          return;
+        }
+
+        const isExec = (this.systemConfig['ejecutable'] !== 'false' && this.systemConfig['executable'] !== 'false');
+
+        if (!isExec) {
+          this.screen.innerHTML = `<div class="error-box">[${i18n.execErrorHeader}]: ${i18n.execError}</div>`;
+          return;
+        }
+
+        const langData = this.getLanguageData();
+        this.screen.setAttribute('lang', langData.htmlLang);
+
+        const isBinary = (this.systemConfig['binary'] === 'true');
+        
+        // Aplica EXACTAMENTE la fuente que el usuario defina en text-font
+        // Si text-font = "sans-serif", aplicará sans-serif
+        // Si text-font = "MiFuente", buscará si adjuntaste MiFuente.ttf
+        const fontConfig = this.systemConfig['text-font'] || 'sans-serif';
+        this.screen.style.fontFamily = fontConfig;
+
+        const structureMatch = code.match(/<structure>([\s\S]*?)<\/structure>/i);
+        const structureContent = structureMatch ? structureMatch[1] : code;
+
+        const t1 = structureContent.match(/<title1>(.*?)<\/title1>/i);
+        if (t1) {
+          const h1 = document.createElement('h1');
+          let text = this.applyCodification(t1[1]);
+          h1.textContent = isBinary ? this.textToHex(text) : text;
+          this.screen.appendChild(h1);
+        }
+
+        const buttonRegex = /<button\s+function\s*=\s*["'](.*?)["']>(.*?)<\/button>/gi;
+        let btnMatch;
+        while ((btnMatch = buttonRegex.exec(structureContent)) !== null) {
+          const funcName = btnMatch[1].replace(/\(\)/, '').trim();
+          let label = this.applyCodification(btnMatch[2].trim().replace(/^\[(.*?)\]$/, '$1'));
+
+          const btn = document.createElement('button');
+          btn.textContent = isBinary ? this.textToHex(label) : label;
+
+          btn.addEventListener('click', () => {
+            if (typeof this.virtualEnvironment[funcName] === 'function') {
+              this.virtualEnvironment[funcName]();
+              this.logToVirtualConsole(`[${i18n.executed}]: ${funcName}()`);
+            } else {
+              this.logToVirtualConsole(`[Error]: ${i18n.funcNotFound} '${funcName}()'.`);
+            }
+          });
+
+          this.screen.appendChild(btn);
+        }
+
+        const consoleMatch = code.match(/<console>([\s\S]*?)<\/console>/i);
+        if (consoleMatch) {
+          const lineas = consoleMatch[1].split('\n');
+          const salidas = [];
+
+          lineas.forEach(linea => {
+            const procesada = this.processConsoleLine(linea);
+            if (procesada !== '') {
+              salidas.push(procesada);
+            }
+          });
+
+          if (salidas.length > 0) {
+            const codName = (this.systemConfig['Codification'] || 'utf-8').toUpperCase().replace(/['"]/g, '');
+            const langStatus = langData.filesCount === '0' ? i18n.defaultLang : `${langData.filesCount} ${i18n.filesHeader}`;
+            
+            let header = `[${i18n.consoleName} | ${i18n.langHeader}: ${langData.code} (${langStatus}) | ${i18n.codHeader}: ${codName}`;
+            
+            if (this.systemConfig['morearch'] === 'true') {
+              header += ` | MoreArch: ${this.userAttachedFiles.length} File(s)`;
+            }
+            header += `]:`;
+
+            const output = `${header}\n` + salidas.join('\n');
+            this.logToVirtualConsole(output);
+          }
+        }
+      }
+
+      run() {
+        const code = this.editor.value;
+        if (!code) {
+          this.screen.innerHTML = '';
+          return;
+        }
+        this.parseSystemConfig(code);
+        this.compileScript(code);
+        this.renderStructure(code);
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      new PCJSimulator('pcj-editor', 'simulator-screen', 'virtual-console-modal', 'btn-toggle-console');
+    });
+  </script>
+</body>
+</html>

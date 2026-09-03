@@ -1,0 +1,38 @@
+<pcj>
+  <ImagTEM>
+     <system>
+        <name_company>
+        {
+type = "code"
+ejecutable = "true"
+morearch = "true"
+binary = "false"
+ttf archive = "false"
+text-font = sans-serif
+Language(s) = ES_CO (0)
+Codification = "utf-8"
+is js = "true"
+}
+<title>
+</system>
+<structure>
+<title1>Bienvenidos</title1>
+<button function = "hola()">[Hola]<button>
+</structure>
+<secret texts>
+1. Hola cómo estás 
+</secret texts>
+<console>
+<p>Hola desde la consola<p>
+result[2+2]=‘2’
+<p>‘2’<p>
+</console>
+<script>
+ function hola() {
+ document.body.style.backgroundColor = "yellow";
+ [[<<pcj>>]] {
+ <text>Holaaa<text>
+ }
+ }
+ </script>
+ </pcj>

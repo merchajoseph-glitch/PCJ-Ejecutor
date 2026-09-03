@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guía de Documentación .PCJ</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #1e1e1e;
+      color: #e0e0e0;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #252526;
+      padding: 30px;
+      border-radius: 8px;
+      border: 1px solid #3c3c3c;
+    }
+    h1, h2, h3 {
+      color: #007acc;
+      border-bottom: 1px solid #3c3c3c;
+      padding-bottom: 8px;
+    }
+    code {
+      background: #181818;
+      color: #9cdcfe;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    pre {
+      background: #181818;
+      color: #dcdcaa;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      border: 1px solid #3c3c3c;
+      font-family: monospace;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th, td {
+      border: 1px solid #3c3c3c;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #1e1e1e;
+      color: #007acc;
+    }
+    .tag-badge {
+      background: #2e7d32;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .btn-back {
+      display: inline-block;
+      margin-bottom: 20px;
+      background: #007acc;
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .btn-back:hover {
+      background: #005999;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <a href="index.html" class="btn-back">← Volver al Simulador</a>
+
+    <h1>Documentación Oficial del Formato .PCJ</h1>
+    <p>El formato <code>.PCJ</code> es un lenguaje de marcado interactivo diseñado para simular interfaces, lógica interna y ejecución de scripts livianos.</p>
+
+    <h2>1. Estructura Básica</h2>
+    <p>Todo documento PCJ debe estar delimitado por la etiqueta principal <code>&lt;pcj&gt;</code>:</p>
+
+<pre><code>&lt;pcj&gt;
+  &lt;ImagTEM&gt;
+     &lt;system&gt;
+        {
+          type = "code"
+          ejecutable = "true"
+          morearch = "true"
+          binary = "false"
+          ttf archive = "false"
+          text-font = sans-serif
+          Language(s) = ES_CO (0)
+          Codification = "utf-8"
+          is js = "true"
+        }
+     &lt;/system&gt;
+     &lt;structure&gt;
+        &lt;title1&gt;Hola Mundo&lt;/title1&gt;
+        &lt;button function="miFuncion()"&gt;[Haz Clic Aquí]&lt;/button&gt;
+     &lt;/structure&gt;
+     &lt;script&gt;
+        function miFuncion() {
+           document.body.style.backgroundColor = "cyan";
+        }
+     &lt;/script&gt;
+  &lt;/ImagTEM&gt;
+&lt;/pcj&gt;</code></pre>
+
+    <h2>2. Configuración en &lt;system&gt;</h2>
+    <p>Dentro de los corchetes <code>{ }</code> del bloque <code>&lt;system&gt;</code> se definen las propiedades globales:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Propiedad</th>
+          <th>Valores</th>
+          <th>Descripción</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>ejecutable</code></td>
+          <td><code>true</code> | <code>false</code></td>
+          <td>Permite o bloquea la ejecución de la interfaz.</td>
+        </tr>
+        <tr>
+          <td><code>morearch</code></td>
+          <td><code>true</code> | <code>false</code></td>
+          <td>Muestra el botón para adjuntar archivos (fuentes, `.lang`, etc.).</td>
+        </tr>
+        <tr>
+          <td><code>text-font</code></td>
+          <td><code>sans-serif</code>, <code>monospace</code>, <code>NombreFuente</code></td>
+          <td>Define la tipografía. Para usar una fuente adjunta (ej. <code>Minecraft.ttf</code>), escribe exactamente su nombre (<code>text-font = Minecraft</code>).</td>
+        </tr>
+        <tr>
+          <td><code>binary</code></td>
+          <td><code>true</code> | <code>false</code></td>
+          <td>Muestra los textos convertidos a formato hexadecimal.</td>
+        </tr>
+        <tr>
+          <td><code>Language(s)</code></td>
+          <td><code>ES_CO (0)</code>, <code>EN_US (0)</code></td>
+          <td>Define el idioma del documento.</td>
+        </tr>
+        <tr>
+          <td><code>Codification</code></td>
+          <td><code>utf-8</code>, <code>ascii</code>, <code>iso-8859-1</code></td>
+          <td>Define la codificación de caracteres.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>3. Uso de Fuentes Personalizadas (.ttf)</h2>
+    <p>Para usar una fuente propia:</p>
+    <ol>
+      <li>Activa <code>morearch = "true"</code> en el bloque <code>&lt;system&gt;</code>.</li>
+      <li>Usa el botón <strong>Adjuntar Archivos</strong> en el simulador y selecciona tu archivo <code>.ttf</code> (por ejemplo, <code>Minecraft.ttf</code>).</li>
+      <li>En la propiedad <code>text-font</code> del código, pon el nombre del archivo sin la extensión: <code>text-font = Minecraft</code>.</li>
+    </ol>
+
+    <h2>4. Elementos de Interfaz (&lt;structure&gt;)</h2>
+    <ul>
+      <li><code>&lt;title1&gt;Texto&lt;/title1&gt;</code>: Crea un título principal en la pantalla.</li>
+      <li><code>&lt;button function="nombreFuncion()"&gt;[Texto]&lt;/button&gt;</code>: Crea un botón interactivo vinculado a una función definida en <code>&lt;script&gt;</code>.</li>
+    </ul>
+
+    <h2>5. Scripting (&lt;script&gt;)</h2>
+    <p>Permite manipular el entorno con JavaScript estándar o bloques especiales como <code>[[&lt;&lt;pcj&gt;&gt;]]</code> para inyectar elementos HTML en vivo.</p>
+
+  </div>
+
+</body>
+</html>
