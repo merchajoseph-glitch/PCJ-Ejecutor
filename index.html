@@ -48,11 +48,10 @@
       <textarea id="pcj-editor" spellcheck="false" placeholder="Escribe o pega tu código .PCJ aquí..."><pcj>
   <ImagTEM>
      <system>
-        <name_company>
         {
 type = "code"
 ejecutable = "true"
-morearch = "true"
+morearch = "false"
 binary = "false"
 ttf archive = "false"
 text-font = sans-serif
@@ -60,33 +59,25 @@ Language(s) = ES_CO (0)
 Codification = "utf-8"
 is js = "true"
 }
-<title>
 </system>
+
 <structure>
-<title1>Bienvenidos</title1>
-<button function = "hola()">[Hola]</button>
+<title1>Mi primera página</title1>
+<texto1>No sé qué poner :P</texto1>
+<button function="color()">[Azul feliz]</button>
 </structure>
-<secret texts>
-1. Hola cómo estás 
-</secret texts>
-<console>
-<p>Hola desde la consola</p>
-result[2+2]=‘2’
-<p>‘2’</p>
-</console>
+
 <script>
- function hola() {
- document.body.style.backgroundColor = "yellow";
- [[<<pcj>>]] {
- <text>Holaaa</text>
- }
- }
- </script>
- </pcj></textarea>
+function color() {
+  document.body.style.backgroundColor = "#99F";
+}
+</script>
+  </ImagTEM>
+</pcj></textarea>
       
       <div class="controls">
         <button id="btn-export-file" class="btn-action">Guardar Documento .PCJ</button>
-        <a id="btn-export-pdf" href="guía.html" download="guía.html" class="btn-pdf">Descargar Guía (.PCJ)</a>
+        <a id="btn-export-pdf" href="guía.html" target="_blank" class="btn-pdf">Ver / Descargar Guía (.PCJ)</a>
         <label id="extra-assets-wrapper" style="display: none; cursor: pointer;">
           <span id="ui-btn-attach" class="btn-secondary">Adjuntar Archivos</span>
           <input type="file" id="assets-input" multiple style="display: none;">
@@ -120,7 +111,7 @@ result[2+2]=‘2’
         langLabel: "Idioma de la interfaz:",
         placeholder: "Escribe o pega tu código .PCJ aquí...",
         btnSave: "Guardar Documento .PCJ",
-        btnPdf: "Descargar Guía html (.PCJ)",
+        btnPdf: "Ver / Descargar Guía (.PCJ)",
         btnAttach: "Adjuntar Archivos",
         btnShowConsole: "Ver Consola Sandbox",
         btnHideConsole: "Ocultar Consola Sandbox",
@@ -144,7 +135,7 @@ result[2+2]=‘2’
         langLabel: "Interface Language:",
         placeholder: "Type or paste your .PCJ code here...",
         btnSave: "Save .PCJ Document",
-        btnPdf: "Download html Guide (.PCJ)",
+        btnPdf: "View / Download Guide (.PCJ)",
         btnAttach: "Attach Files",
         btnShowConsole: "View Sandbox Console",
         btnHideConsole: "Hide Sandbox Console",
@@ -234,7 +225,6 @@ result[2+2]=‘2’
             const fontUrl = URL.createObjectURL(file);
             const fontName = file.name.replace(/\.[^/.]+$/, "");
             this.detectedFonts.push(fontName);
-            // Registra la fuente con el nombre exacto de su archivo (sin la extensión .ttf)
             const fontRule = `@font-face { font-family: '${fontName}'; src: url('${fontUrl}'); }`;
             this.dynamicStyles.appendChild(document.createTextNode(fontRule));
           }
@@ -514,16 +504,13 @@ result[2+2]=‘2’
         this.screen.setAttribute('lang', langData.htmlLang);
 
         const isBinary = (this.systemConfig['binary'] === 'true');
-        
-        // Aplica EXACTAMENTE la fuente que el usuario defina en text-font
-        // Si text-font = "sans-serif", aplicará sans-serif
-        // Si text-font = "MiFuente", buscará si adjuntaste MiFuente.ttf
         const fontConfig = this.systemConfig['text-font'] || 'sans-serif';
         this.screen.style.fontFamily = fontConfig;
 
         const structureMatch = code.match(/<structure>([\s\S]*?)<\/structure>/i);
         const structureContent = structureMatch ? structureMatch[1] : code;
 
+        // Renderizar Título <title1>
         const t1 = structureContent.match(/<title1>(.*?)<\/title1>/i);
         if (t1) {
           const h1 = document.createElement('h1');
@@ -532,6 +519,16 @@ result[2+2]=‘2’
           this.screen.appendChild(h1);
         }
 
+        // Renderizar Texto <texto1> o <texto>
+        const txtMatch = structureContent.match(/<(texto1|texto)>(.*?)<\/\1>/i);
+        if (txtMatch) {
+          const p = document.createElement('p');
+          let text = this.applyCodification(txtMatch[2]);
+          p.textContent = isBinary ? this.textToHex(text) : text;
+          this.screen.appendChild(p);
+        }
+
+        // Renderizar Botón <button>
         const buttonRegex = /<button\s+function\s*=\s*["'](.*?)["']>(.*?)<\/button>/gi;
         let btnMatch;
         while ((btnMatch = buttonRegex.exec(structureContent)) !== null) {
@@ -553,6 +550,7 @@ result[2+2]=‘2’
           this.screen.appendChild(btn);
         }
 
+        // Renderizar Consola <console>
         const consoleMatch = code.match(/<console>([\s\S]*?)<\/console>/i);
         if (consoleMatch) {
           const lineas = consoleMatch[1].split('\n');
