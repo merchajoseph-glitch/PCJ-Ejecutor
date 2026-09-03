@@ -424,12 +424,14 @@
       transpilePCJScript(jsCode) {
         let cleanJS = jsCode.replace(/document\.body/g, `document.getElementById('${this.screen.id}')`);
 
+        // Reemplazar la sintaxis [[<<pcj>>]] { <text>...</text> }
         cleanJS = cleanJS.replace(/\[\[<<pcj>>\]\]\s*\{([\s\S]*?)\}/g, (match, innerContent) => {
-          const textMatch = innerContent.match(/<text>(.*?)<\/text>/i);
+          const textMatch = innerContent.match(/<text>(.*?)<\/?text>/i);
           if (textMatch) {
+            const contenidoTexto = textMatch[1].trim();
             return `
               const _text = document.createElement('p');
-              _text.textContent = "${textMatch[1]}";
+              _text.textContent = "${contenidoTexto}";
               document.getElementById('${this.screen.id}').appendChild(_text);
             `;
           }
@@ -459,8 +461,20 @@
         const i18n = this.getI18n();
 
         try {
-          const transpiledJs = rawJs.replace(/function\s+([a-zA-Z0-9_$]+)/g, 'env.$1 = function');
-          const sandboxRunner = new Function('env', transpiledJs);
+          // Extraer nombres de funciones
+          const funcNames = [];
+          const funcRegex = /function\s+([a-zA-Z0-9_$]+)/g;
+          let match;
+          while ((match = funcRegex.exec(rawJs)) !== null) {
+            funcNames.push(match[1]);
+          }
+
+          let wrappedJs = rawJs;
+          funcNames.forEach(fn => {
+            wrappedJs += `\n env.${fn} = ${fn};`;
+          });
+
+          const sandboxRunner = new Function('env', wrappedJs);
           sandboxRunner(this.virtualEnvironment);
         } catch (e) {
           this.logToVirtualConsole(`[${i18n.compileError}]: ${e.message}`);
