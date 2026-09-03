@@ -529,8 +529,8 @@
           this.screen.appendChild(p);
         }
 
-        // Renderizar Botón <button>
-        const buttonRegex = /<button\s+function\s*=\s*["'](.*?)["']>(.*?)<\/button>/gi;
+        // Renderizar Botón <button> (Soporta <button ...>texto</button> y <button ...>texto<button>)
+        const buttonRegex = /<button\s+function\s*=\s*["'](.*?)["']>(.*?)<\/?button>/gi;
         let btnMatch;
         while ((btnMatch = buttonRegex.exec(structureContent)) !== null) {
           const funcName = btnMatch[1].replace(/\(\)/, '').trim();
