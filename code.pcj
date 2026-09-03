@@ -17,7 +17,7 @@ is js = "true"
 </system>
 <structure>
 <title1>Bienvenidos</title1>
-<button function = "hola()">[Hola]<button>
+<button function="hola()">[Hola]</button>
 </structure>
 <secret texts>
 1. Hola cómo estás 
