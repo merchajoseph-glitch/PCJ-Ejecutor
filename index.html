@@ -45,31 +45,7 @@
 
   <div class="container">
     <div class="editor-section">
-      <textarea id="pcj-editor" spellcheck="false" placeholder="Escribe o pega tu código .PCJ aquí..."><system>
-  {
-  type = "code"
-  ejecutable = "true"
-  morearch = "false"
-  binary = "false"
-  ttf archive = "false"
-  text-font = sans-serif
-  Language(s) = ES_CO (0)
-  Codification = "utf-8"
-  is js = "true"
-  }
-</system>
-
-<structure>
-  <title1>Mi primera página</title1>
-  <texto1>No sé qué poner :P</texto1>
-  <button function="color()">[Azul feliz]</button>
-</structure>
-
-<script>
-  function color() {
-    document.body.style.backgroundColor = "#99F";
-  }
-</script></textarea>
+      <textarea id="pcj-editor" spellcheck="false" placeholder="Escribe o pega tu código .PCJ aquí..."></textarea>
       
       <div class="controls">
         <button id="btn-export-file" class="btn-action">Guardar Documento .PCJ</button>
@@ -177,7 +153,22 @@
 
         this.initEvents();
         this.updateUI();
-        this.run();
+        this.loadInitialCode();
+      }
+
+      loadInitialCode() {
+        fetch('code.pcj')
+          .then(res => {
+            if (!res.ok) throw new Error("No se encontró code.pcj");
+            return res.text();
+          })
+          .then(data => {
+            this.editor.value = data;
+            this.run();
+          })
+          .catch(() => {
+            this.run();
+          });
       }
 
       initEvents() {
