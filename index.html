@@ -45,35 +45,31 @@
 
   <div class="container">
     <div class="editor-section">
-      <textarea id="pcj-editor" spellcheck="false" placeholder="Escribe o pega tu código .PCJ aquí..."><pcj>
-  <ImagTEM>
-     <system>
-        {
-type = "code"
-ejecutable = "true"
-morearch = "false"
-binary = "false"
-ttf archive = "false"
-text-font = sans-serif
-Language(s) = ES_CO (0)
-Codification = "utf-8"
-is js = "true"
-}
+      <textarea id="pcj-editor" spellcheck="false" placeholder="Escribe o pega tu código .PCJ aquí..."><system>
+  {
+  type = "code"
+  ejecutable = "true"
+  morearch = "false"
+  binary = "false"
+  ttf archive = "false"
+  text-font = sans-serif
+  Language(s) = ES_CO (0)
+  Codification = "utf-8"
+  is js = "true"
+  }
 </system>
 
 <structure>
-<title1>Mi primera página</title1>
-<texto1>No sé qué poner :P</texto1>
-<button function="color()">[Azul feliz]</button>
+  <title1>Mi primera página</title1>
+  <texto1>No sé qué poner :P</texto1>
+  <button function="color()">[Azul feliz]</button>
 </structure>
 
 <script>
-function color() {
-  document.body.style.backgroundColor = "#99F";
-}
-</script>
-  </ImagTEM>
-</pcj></textarea>
+  function color() {
+    document.body.style.backgroundColor = "#99F";
+  }
+</script></textarea>
       
       <div class="controls">
         <button id="btn-export-file" class="btn-action">Guardar Documento .PCJ</button>
